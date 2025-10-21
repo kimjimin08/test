@@ -183,40 +183,59 @@ struct stat {
 | **int lchown(const char *path, uid_t owner, gid_t group)** | 링크 자체의 소유자/그룹 변경 |
 | **int fchown(int fd, uid_t owner, gid_t group)** | 파일 디스크립터로 변경 |
 
+# 파일 시스템과 I-node 요약
+
+(이전 내용 생략)
+
+---
+
+## 📘 C 언어 실습: `chmod` 명령어 구현
+
+다음은 `chmod` 시스템 호출을 이용해 리눅스 명령어 **`chmod`** 와 동일한 기능을 수행하는 C 프로그램 예제입니다.
+
+```c
 #include <stdio.h>      // printf, perror
 #include <stdlib.h>     // strtol, exit
 #include <sys/stat.h>   // chmod, mode_t
 
 int main(int argc, char *argv[]) {
-    
     // 1. 인자 개수 확인
     // 사용법: ./my_chmod <mode> <filepath>
-    // (argc는 3이어야 함: [0]프로그램이름, [1]모드, [2]파일경로)
     if (argc != 3) {
         fprintf(stderr, "사용법: %s <octal_mode> <file_path>\n", argv[0]);
-        exit(1); // 비정상 종료
+        exit(1);
     }
 
     // 2. 인자 파싱
-    const char *mode_str = argv[1]; // "755" 같은 문자열
-    const char *path = argv[2];     // "myfile.txt" 같은 파일 경로
+    const char *mode_str = argv[1]; // 예: "755"
+    const char *path = argv[2];     // 예: "myfile.txt"
 
-    // 3. 핵심: 권한 문자열을 8진수 숫자로 변환
-    // strtol: 문자열을 long 타입 숫자로 변환하는 함수 [cite: 51]
-    // NULL: 변환 후 남은 문자열을 저장할 포인터 (여기선 필요 없음)
-    // 8: 입력된 문자열(mode_str)을 8진수로 해석하라는 의미
+    // 3. 8진수 문자열을 숫자로 변환
     mode_t mode = (mode_t)strtol(mode_str, NULL, 8);
 
-    // 4. chmod 함수 호출로 권한 변경
-    // int chmod(const char *path, mode_t mode); 
+    // 4. chmod 호출로 권한 변경
     if (chmod(path, mode) == -1) {
-        // 실패 시 -1 반환
-        perror("chmod error"); // 오류 원인 출력
-        exit(1); // 비정상 종료
+        perror("chmod error");
+        exit(1);
     }
 
-    // 5. 성공
+    // 5. 성공 메시지 출력
     printf("'%s'의 권한이 %s(으)로 변경되었습니다.\n", path, mode_str);
-    
-    return 0; // 정상 종료
+    return 0;
 }
+```
+
+### 🧠 코드 설명 요약
+- **`argc` 검사**: 프로그램 실행 시 인자가 정확히 2개(mode, path)인지 확인합니다.
+- **`strtol(mode_str, NULL, 8)`**: 문자열 형태의 권한(예: "755")을 8진수로 변환합니다.
+- **`chmod(path, mode)`**: 지정한 파일의 접근 권한을 변경합니다.
+- **`perror()`**: 시스템 오류 발생 시 그 원인을 출력합니다.
+
+✅ **이 프로그램은 명령어 `chmod` 와 동일하게 작동합니다.** 예를 들어:
+```bash
+./my_chmod 644 myfile.txt
+```
+를 실행하면, `myfile.txt`의 권한이 `rw-r--r--` 로 설정됩니다.
+
+
+
