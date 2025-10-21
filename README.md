@@ -182,3 +182,41 @@ struct stat {
 | **int chown(const char *path, uid_t owner, gid_t group)** | 파일 소유자/그룹 변경 |
 | **int lchown(const char *path, uid_t owner, gid_t group)** | 링크 자체의 소유자/그룹 변경 |
 | **int fchown(int fd, uid_t owner, gid_t group)** | 파일 디스크립터로 변경 |
+
+#include <stdio.h>      // printf, perror
+#include <stdlib.h>     // strtol, exit
+#include <sys/stat.h>   // chmod, mode_t
+
+int main(int argc, char *argv[]) {
+    
+    // 1. 인자 개수 확인
+    // 사용법: ./my_chmod <mode> <filepath>
+    // (argc는 3이어야 함: [0]프로그램이름, [1]모드, [2]파일경로)
+    if (argc != 3) {
+        fprintf(stderr, "사용법: %s <octal_mode> <file_path>\n", argv[0]);
+        exit(1); // 비정상 종료
+    }
+
+    // 2. 인자 파싱
+    const char *mode_str = argv[1]; // "755" 같은 문자열
+    const char *path = argv[2];     // "myfile.txt" 같은 파일 경로
+
+    // 3. 핵심: 권한 문자열을 8진수 숫자로 변환
+    // strtol: 문자열을 long 타입 숫자로 변환하는 함수 [cite: 51]
+    // NULL: 변환 후 남은 문자열을 저장할 포인터 (여기선 필요 없음)
+    // 8: 입력된 문자열(mode_str)을 8진수로 해석하라는 의미
+    mode_t mode = (mode_t)strtol(mode_str, NULL, 8);
+
+    // 4. chmod 함수 호출로 권한 변경
+    // int chmod(const char *path, mode_t mode); 
+    if (chmod(path, mode) == -1) {
+        // 실패 시 -1 반환
+        perror("chmod error"); // 오류 원인 출력
+        exit(1); // 비정상 종료
+    }
+
+    // 5. 성공
+    printf("'%s'의 권한이 %s(으)로 변경되었습니다.\n", path, mode_str);
+    
+    return 0; // 정상 종료
+}
