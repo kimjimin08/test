@@ -183,12 +183,6 @@ struct stat {
 | **int lchown(const char *path, uid_t owner, gid_t group)** | 링크 자체의 소유자/그룹 변경 |
 | **int fchown(int fd, uid_t owner, gid_t group)** | 파일 디스크립터로 변경 |
 
-# 파일 시스템과 I-node 요약
-
-(이전 내용 생략)
-
----
-
 ## 📘 C 언어 실습: `chmod` 명령어 구현
 
 다음은 `chmod` 시스템 호출을 이용해 리눅스 명령어 **`chmod`** 와 동일한 기능을 수행하는 C 프로그램 예제입니다.
