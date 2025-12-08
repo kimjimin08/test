@@ -7,17 +7,15 @@
 `getuid()`(내 ID) ➔ `getpwuid()`(정보 퍼오기)
 
 ### (2) 모범 답안 코드
+
 #include <stdio.h>
 #include <unistd.h>  // getuid
 #include <pwd.h>     // getpwuid, struct passwd
-
 int main() {
     // 1. 현재 사용자 ID 획득
     uid_t uid = getuid();
-
     // 2. 패스워드 파일에서 정보 획득
     struct passwd *pw = getpwuid(uid);
-
     // 예외 처리
     if (pw == NULL) return -1;
     // 3. 정보 출력 (멤버변수 pw_ 접두어 주의!)
