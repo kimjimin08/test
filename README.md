@@ -1,235 +1,127 @@
-# 파일시스템(File System)
+# [고급운영체제 & 실무프로젝트] 완전 정복 요약
 
-## 1️ 개념  
-운영체제가 **파일이나 자료를 쉽게 찾고 접근할 수 있도록 보관·조직하는 체제**입니다.
+## 1. 🚨 [10점 확보] 서술형 족보 (⭐⭐⭐)
+**Q. 패스워드 파일에서 현재 사용자 정보를 추출하여 출력하시오.**
 
----
+### (1) 핵심 로직
+`getuid()`(내 ID) ➔ `getpwuid()`(정보 퍼오기)
 
-## 2️ 파일시스템의 종류  
+### (2) 모범 답안 코드
+#include <stdio.h>
+#include <unistd.h>  // getuid
+#include <pwd.h>     // getpwuid, struct passwd
 
-### 🔹 (1) 수평적 파일시스템 (Flat File System)
-- 디스크의 빈 공간에 파일들을 **구분 없이 저장** (디렉토리 X)  
-- 구현이 간단하며, 파일 위치 계산이나 유지에 많은 메모리가 필요하지 않음  
-- **초기 컴퓨터 환경**(하드웨어 자원 제한 시)에 사용  
+int main() {
+    // 1. 현재 사용자 ID 획득
+    uid_t uid = getuid();
 
-### 🔹 (2) 계층적 파일시스템 (Hierarchical File System)
-- 파일을 **논리적 디렉토리 구조로 구분 저장**  
-- 디렉토리 / 서브디렉토리로 관리 가능  
-- **현재 대부분의 OS에서 사용**
+    // 2. 패스워드 파일에서 정보 획득
+    struct passwd *pw = getpwuid(uid);
 
----
+    // 예외 처리
+    if (pw == NULL) return -1;
 
-# 🐧 유닉스 파일시스템 (UNIX File System)
+    // 3. 정보 출력 (멤버변수 pw_ 접두어 주의!)
+    printf("계정명: %s\n", pw->pw_name);
+    printf("UID: %d\n", pw->pw_uid);
+    printf("GID: %d\n", pw->pw_gid);
+    printf("홈디렉토리: %s\n", pw->pw_dir);
+    printf("쉘: %s\n", pw->pw_shell);
 
-## 1 특징
-- **계층적 파일시스템** 사용  
-- **하드웨어 장치를 추상화**하여 파일로 관리 (장치 파일)  
-- 모든 파일이 **하나의 루트(/)** 아래 구성됨  
-- 이동식 파일시스템(mount, unmount) 지원  
-
----
-
-## 2 파일의 종류
-
-| 구분 | 설명 |
-|------|------|
-| **일반 파일 (Regular File)** | 디스크에 저장된 데이터의 집합 |
-| **특수 파일 (Special File)** | 하드웨어 장치를 추상화한 파일 |
-| **문자장치파일 (Character Device File)** | 키보드, 모니터, 프린터 등 바이트 단위 입출력 (비버퍼링) |
-| **블록장치파일 (Block Device File)** | 디스크, DVD 등 블록 단위 입출력 (버퍼링 지원) |
-| **디렉토리 (Directory)** | 파일명과 파일 간의 매핑 정보 관리 |
-| **FIFO (Named Pipe)** | 프로세스 간 통신용 파이프 파일 |
-| **유닉스 도메인 소켓 (UNIX Domain Socket)** | 같은 서버 내 프로세스 간 통신용 특수 파일 |
-
----
-
-## 3 이동식 파일시스템 (Removable File System)
-- 하나의 루트 디렉토리 아래 새 디스크를 연결 가능  
-- `mount`, `unmount` 명령으로 관리  
-- 일관된 파일시스템 유지 가능  
-
----
-
-## 4 장치번호 (Device Number)
-- **특수 파일**에는 두 가지 번호 존재  
-  - **주장치번호 (major number)**: 장치의 대표 분류 (예: 디스크, I/O 장치 등)  
-  - **부장치번호 (minor number)**: 주장치 내부의 세부 장치 식별 (예: 모니터 등)
-
----
-
-## 5 I-노드 (i-node) 구조
-
-| 구분 | 설명 |
-|------|------|
-| **I-노드** | 파일/디렉토리의 모든 정보를 가진 구조체 (64B) |
-| **I-리스트 (I-list)** | 파일시스템 내의 모든 i-node의 리스트 |
-| **I-번호 (I-number)** | 파일 식별용 고유 번호 (주소 포인터 역할) |
-
-### i-node가 저장하는 정보
-- 파일 소유자 ID / 그룹 ID  
-- 접근 권한  
-- 데이터 블록의 실제 디스크 주소  
-- 파일 크기  
-- 접근 / 변경 / i-node 변경 시간  
-- 파일 형식  
-- (특수파일의 경우) 주/부 장치번호  
-
----
-
-## 6 링크(Link)
-
-| 종류 | 설명 |
-|------|------|
-| **하드 링크 (Hard Link)** | 동일 파일을 여러 이름으로 접근 가능 (같은 파일시스템 내에서만) |
-| **심볼릭 링크 (Symbolic Link)** | 원본 파일의 **경로명**만 저장 (서로 다른 파일시스템에서도 가능) |
-
----
-
-# 파일 속성 (File Attributes)
-
-## 1 i-node 정보 구조체 (struct stat)
-```c
-struct stat {
-    dev_t     st_dev;      // i-node가 위치한 장치 번호
-    ino_t     st_ino;      // i-node 번호
-    mode_t    st_mode;     // 파일 형식 + 권한 비트
-    nlink_t   st_nlink;    // 하드 링크 수
-    uid_t     st_uid;      // 소유자 ID
-    gid_t     st_gid;      // 그룹 ID
-    dev_t     st_rdev;     // 특수 파일의 장치 번호
-    off_t     st_size;     // 파일 크기(Byte)
-    timestruc_t st_atim;   // 마지막 접근 시간
-    timestruc_t st_mtim;   // 마지막 수정 시간
-    timestruc_t st_ctim;   // i-node 변경 시간
-    blksize_t st_blksize;  // I/O 버퍼 크기
-    blkcnt_t  st_blocks;   // 사용 블록 수
-};
-```
-
----
-
-## 2 파일 형식 매크로
-
-| 매크로 | 의미 |
-|---------|------|
-| S_ISREG | 일반 파일 |
-| S_ISDIR | 디렉토리 |
-| S_ISCHR | 문자 특수 파일 |
-| S_ISBLK | 블록 특수 파일 |
-| S_ISLNK | 심볼릭 링크 |
-| S_ISFIFO | FIFO 파일 |
-| S_ISSOCK | 유닉스 도메인 소켓 |
-
----
-
-## 3 접근 권한 속성
-
-| 매크로 | 의미 |
-|---------|------|
-| S_ISUID | set-user-id-on-execution |
-| S_ISGID | set-group-id-on-execution |
-| S_ISVTX | sticky bit |
-
-| 매크로 | 권한 | 설명 |
-|---------|------|------|
-| S_IRUSR | 읽기 | 소유자 읽기 |
-| S_IWUSR | 쓰기 | 소유자 쓰기 |
-| S_IXUSR | 실행 | 소유자 실행 |
-| S_IRGRP, S_IWGRP, S_IXGRP | 그룹 권한 |
-| S_IROTH, S_IWOTH, S_IXOTH | 기타 사용자 권한 |
-
----
-
-# 파일 정보 함수
-
-| 함수 | 설명 |
-|------|------|
-| **int stat(const char *path, struct stat *st)** | 파일의 i-node 정보 추출 |
-| **int lstat(const char *path, struct stat *st)** | 링크 자체의 정보 추출 |
-| **int readlink(const char *path, void *buf, size_t bufsiz)** | 심볼릭 링크의 경로명 읽기 |
-| **char *realpath(const char *filename, char *resolvedname)** | 심볼릭 링크의 실제 경로 반환 |
-| **int access(const char *path, int amode)** | 파일 존재/권한 점검 (`R_OK`, `W_OK`, `X_OK`, `F_OK`) |
-
----
-
-# 파일 권한 비트
-
-| 권한 | 의미 |
-|------|------|
-| **읽기(Read)** | 파일/디렉토리 내용 읽기 |
-| **쓰기(Write)** | 파일 내용 수정, 디렉토리 내 파일 생성·삭제 가능 |
-| **실행(Execute)** | 프로그램 실행, 디렉토리 접근 가능 |
-
----
-
-# 특수 비트 권한
-
-| 비트 | 설명 | 권한 값 |
-|------|------|----------|
-| **set-user-id (SUID)** | 실행 시 파일 소유자 권한으로 동작 | `04000` |
-| **set-group-id (SGID)** | 실행 시 그룹 권한으로 동작 | `02000` |
-| **sticky bit** | 디렉토리 내 다른 사용자의 파일 삭제 방지 | `01000` |
-| **예시** | `/tmp` 디렉토리에 적용됨 |  |
-
----
-
-# 파일 속성 변경 함수
-
-| 함수 | 설명 |
-|------|------|
-| **int chmod(const char *path, mode_t mode)** | 파일 권한 변경 |
-| **int fchmod(int fd, mode_t mode)** | 파일 디스크립터로 권한 변경 |
-| **int chown(const char *path, uid_t owner, gid_t group)** | 파일 소유자/그룹 변경 |
-| **int lchown(const char *path, uid_t owner, gid_t group)** | 링크 자체의 소유자/그룹 변경 |
-| **int fchown(int fd, uid_t owner, gid_t group)** | 파일 디스크립터로 변경 |
-
-## 📘 C 언어 실습: `chmod` 명령어 구현
-
-다음은 `chmod` 시스템 호출을 이용해 리눅스 명령어 **`chmod`** 와 동일한 기능을 수행하는 C 프로그램 예제입니다.
-
-```c
-#include <stdio.h>      // printf, perror
-#include <stdlib.h>     // strtol, exit
-#include <sys/stat.h>   // chmod, mode_t
-
-int main(int argc, char *argv[]) {
-    // 1. 인자 개수 확인
-    // 사용법: ./my_chmod <mode> <filepath>
-    if (argc != 3) {
-        fprintf(stderr, "사용법: %s <octal_mode> <file_path>\n", argv[0]);
-        exit(1);
-    }
-
-    // 2. 인자 파싱
-    const char *mode_str = argv[1]; // 예: "755"
-    const char *path = argv[2];     // 예: "myfile.txt"
-
-    // 3. 8진수 문자열을 숫자로 변환
-    mode_t mode = (mode_t)strtol(mode_str, NULL, 8);
-
-    // 4. chmod 호출로 권한 변경
-    if (chmod(path, mode) == -1) {
-        perror("chmod error");
-        exit(1);
-    }
-
-    // 5. 성공 메시지 출력
-    printf("'%s'의 권한이 %s(으)로 변경되었습니다.\n", path, mode_str);
     return 0;
 }
-```
+[cite_start][cite: 38, 101, 103]
 
-### 🧠 코드 설명 요약
-- **`argc` 검사**: 프로그램 실행 시 인자가 정확히 2개(mode, path)인지 확인합니다.
-- **`strtol(mode_str, NULL, 8)`**: 문자열 형태의 권한(예: "755")을 8진수로 변환합니다.
-- **`chmod(path, mode)`**: 지정한 파일의 접근 권한을 변경합니다.
-- **`perror()`**: 시스템 오류 발생 시 그 원인을 출력합니다.
+---
 
-✅ **이 프로그램은 명령어 `chmod` 와 동일하게 작동합니다.** 예를 들어:
-```bash
-./my_chmod 644 myfile.txt
-```
-를 실행하면, `myfile.txt`의 권한이 `rw-r--r--` 로 설정됩니다.
+## 2. 📂 파일 및 디렉토리 관리
 
+### (1) 파일/디렉토리 조작 (⭐⭐⭐)
+* [cite_start]**파일 삭제:** `unlink(path)` [cite: 449][cite_start], `remove(path)` [cite: 452]
+* [cite_start]**디렉토리 삭제:** `rmdir(path)` [cite: 462] (비어있어야 함)
+* [cite_start]**디렉토리 생성:** `mkdir(path, mode)` [cite: 458] (**mode** 인자 필수!)
+* [cite_start]**이름 변경:** `rename(old, new)` [cite: 477]
+* **링크 생성:**
+    * [cite_start]하드링크: `link(기존, 새)` [cite: 469]
+    * [cite_start]심볼릭링크: `symlink(기존, 새)` [cite: 472]
+* [cite_start]**경로 변경:** `chdir(path)`, `fchdir(fd)` [cite: 487-488]
+* [cite_start]**현재 경로 확인:** `getcwd(buf, size)` [cite: 483]
 
+### (2) 디렉토리 읽기 (⭐⭐⭐)
+* [cite_start]**순서:** `opendir()` ➔ `readdir()` ➔ `closedir()` [cite: 503-516]
+* **위치 제어(추가됨):**
+    * [cite_start]`telldir(dp)`: 현재 위치(오프셋) 반환 [cite: 507]
+    * [cite_start]`seekdir(dp, pos)`: 위치 이동 [cite: 509]
+    * [cite_start]`rewinddir(dp)`: 맨 처음으로 되감기 [cite: 513]
+* [cite_start]**구조체 `struct dirent`:** `d_ino`(번호), `d_name`(이름) [cite: 495]
 
+---
+
+## 3. ⏰ 시간 관리
+
+### (1) 시간 함수 (⭐⭐⭐)
+* [cite_start]**현재 시간(초):** `time(NULL)` (1970.1.1 기준 초) [cite: 527]
+* **구조체 변환:**
+    * [cite_start]`gmtime(time_t*)`: UTC(세계표준시) 기준 [cite: 550]
+    * [cite_start]`localtime(time_t*)`: **지역 시간대** 기준 (가장 많이 씀) [cite: 553]
+* [cite_start]**반대 변환:** `mktime(struct tm*)` (구조체 ➔ 초) [cite: 556]
+* [cite_start]**시간 차이:** `difftime(t1, t0)` (두 시간의 차이 초 계산) [cite: 561]
+
+### (2) 문자열 출력 함수 (⭐)
+* [cite_start]`ctime(time_t*)`: "Day Mon dd hh:mm:ss yyyy" 형식 자동 출력 [cite: 567]
+* [cite_start]`asctime(struct tm*)`: `ctime`과 동일 형식 [cite: 579]
+* [cite_start]`strftime(buf, size, format, tm*)`: 내 맘대로 포맷 지정 [cite: 582]
+    * [cite_start]주요 포맷: `%Y`(년), `%m`(월), `%d`(일), `%H`(시), `%M`(분), `%S`(초) [cite: 592-595]
+
+### (3) `struct tm` 멤버 (⭐⭐)
+* `tm_year`: 1900년 이후 년도 (예: 2023년이면 123)
+* `tm_mon`: 0~11 (1월이 0)
+* [cite_start]`tm_mday`: 1~31 [cite: 546]
+
+---
+
+## 4. 👥 사용자 & 그룹 & 시스템 정보
+
+### (1) 사용자 ID 구분 (⭐⭐⭐)
+* [cite_start]**RUID (실제):** `getuid()` - 프로그램을 실행한 찐 사용자 [cite: 38]
+* [cite_start]**EUID (유효):** `geteuid()` - 파일 접근 권한을 결정하는 ID [cite: 38]
+* [cite_start]**ID 변경:** `setuid(uid)` [cite: 40][cite_start], `seteuid(uid)` (EUID만 변경) [cite: 42]
+
+### (2) 정보 파일 및 함수 (⭐⭐)
+* [cite_start]**`/etc/passwd` (사용자 정보):** `getpwuid(uid)`, `getpwnam(name)` [cite: 101]
+* [cite_start]**`/etc/shadow` (암호화 비번):** `getspnam(name)` (관리자만 가능) [cite: 145]
+    * [cite_start]구조체 `spwd`: `sp_pwdp`(암호), `sp_lstchg`(마지막 변경일) [cite: 130]
+* [cite_start]**`/etc/group` (그룹 정보):** `getgrgid(gid)`, `getgrnam(name)` [cite: 169-170]
+    * [cite_start]구조체 `group`: `gr_name`(그룹명), `gr_gid`(그룹ID), `gr_mem`(멤버들) [cite: 160]
+
+### (3) 로그인 기록 (utmp/wtmp) (⭐)
+* [cite_start]파일 위치: `/var/adm/utmp` (현재 로그인), `/var/adm/wtmp` (히스토리) [cite: 183]
+* [cite_start]구조체 `utmpx`: `ut_user`(유저명), `ut_type`(로그인 타입) [cite: 226]
+* [cite_start]`ut_type` 상수: `BOOT_TIME`(부팅), `USER_PROCESS`(로그인 중), `DEAD_PROCESS`(종료됨) [cite: 209-219]
+
+### (4) 시스템 정보 (⭐)
+* [cite_start]**`uname(struct utsname*)`:** OS 이름, 버전, 하드웨어 정보 확인 [cite: 252]
+    * [cite_start]멤버: `sysname`(OS명), `nodename`(호스트명), `release`, `version`, `machine` [cite: 255]
+* [cite_start]**`sysinfo()`:** 시스템 설정 정보 확인 [cite: 265]
+
+---
+
+## 5. 🚦 신호 (Signal)
+
+### (1) 주요 신호 종류 (⭐⭐⭐)
+* [cite_start]**SIGINT:** Ctrl+C (인터럽트) [cite: 318]
+* [cite_start]**SIGQUIT:** Ctrl+\ (종료 및 코어덤프) [cite: 322]
+* [cite_start]**SIGKILL:** **강제 종료** (무시/블록 불가) [cite: 344]
+* [cite_start]**SIGSTOP:** 실행 중단 (무시/블록 불가) [cite: 401]
+* [cite_start]**SIGALRM:** `alarm()` 시간 만료 시 발생 [cite: 363]
+* [cite_start]**SIGCHLD:** 자식 프로세스 상태 변경(종료 등) 시 부모에게 알림 [cite: 377]
+* [cite_start]**SIGSEGV:** 잘못된 메모리 접근 (Segmentation Fault) [cite: 353]
+* [cite_start]**SIGPIPE:** 끊어진 파이프에 쓰기 시도 시 [cite: 359]
+
+### (2) 신호 처리 함수 (⭐⭐)
+* [cite_start]**보내기:** `kill(pid, sig)` [cite: 413]
+* [cite_start]**대기:** `pause()` (신호 올 때까지 멈춤) [cite: 420]
+* [cite_start]**핸들러 등록:** `signal(sig, handler)` [cite: 437]
+    * [cite_start]`SIG_IGN`: 신호 무시 [cite: 442]
+    * [cite_start]`SIG_DFL`: 기본 동작 수행 [cite: 443]
+* [cite_start]**정보 출력:** `psignal(sig, msg)`, `strsignal(sig)` (신호 이름 문자열 출력) [cite: 429-432]
