@@ -7,7 +7,6 @@
 `getuid()`(내 ID) ➔ `getpwuid()`(정보 퍼오기)
 
 ### (2) 모범 답안 코드
-
 #include <stdio.h>
 #include <unistd.h>  // getuid
 #include <pwd.h>     // getpwuid, struct passwd
