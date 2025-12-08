@@ -20,14 +20,12 @@ int main() {
 
     // 예외 처리
     if (pw == NULL) return -1;
-
     // 3. 정보 출력 (멤버변수 pw_ 접두어 주의!)
     printf("계정명: %s\n", pw->pw_name);
     printf("UID: %d\n", pw->pw_uid);
     printf("GID: %d\n", pw->pw_gid);
     printf("홈디렉토리: %s\n", pw->pw_dir);
     printf("쉘: %s\n", pw->pw_shell);
-
     return 0;
 }
 [cite_start][cite: 38, 101, 103]
