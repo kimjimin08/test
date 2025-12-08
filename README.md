@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <unistd.h>  // getuid
 #include <pwd.h>     // getpwuid, struct passwd
+
 int main() {
     // 1. 현재 사용자 ID 획득
     uid_t uid = getuid();
@@ -72,4 +73,55 @@ int main() {
 * `strftime(buf, size, format, tm*)`: 내 맘대로 포맷 지정
     * 주요 포맷: `%Y`(년), `%m`(월), `%d`(일), `%H`(시), `%M`(분), `%S`(초)
 
-### (3
+### (3) `struct tm` 멤버 (⭐⭐)
+* `tm_year`: 1900년 이후 년도 (예: 2023년이면 123)
+* `tm_mon`: 0~11 (1월이 0)
+* `tm_mday`: 1~31
+
+---
+
+## 4. 👥 사용자 & 그룹 & 시스템 정보
+
+### (1) 사용자 ID 구분 (⭐⭐⭐)
+* **RUID (실제):** `getuid()` - 프로그램을 실행한 찐 사용자
+* **EUID (유효):** `geteuid()` - 파일 접근 권한을 결정하는 ID
+* **ID 변경:** `setuid(uid)`, `seteuid(uid)` (EUID만 변경)
+
+### (2) 정보 파일 및 함수 (⭐⭐)
+* **`/etc/passwd` (사용자 정보):** `getpwuid(uid)`, `getpwnam(name)`
+* **`/etc/shadow` (암호화 비번):** `getspnam(name)` (관리자만 가능)
+    * 구조체 `spwd`: `sp_pwdp`(암호), `sp_lstchg`(마지막 변경일)
+* **`/etc/group` (그룹 정보):** `getgrgid(gid)`, `getgrnam(name)`
+    * 구조체 `group`: `gr_name`(그룹명), `gr_gid`(그룹ID), `gr_mem`(멤버들)
+
+### (3) 로그인 기록 (utmp/wtmp) (⭐)
+* 파일 위치: `/var/adm/utmp` (현재 로그인), `/var/adm/wtmp` (히스토리)
+* 구조체 `utmpx`: `ut_user`(유저명), `ut_type`(로그인 타입)
+* `ut_type` 상수: `BOOT_TIME`(부팅), `USER_PROCESS`(로그인 중), `DEAD_PROCESS`(종료됨)
+
+### (4) 시스템 정보 (⭐)
+* **`uname(struct utsname*)`:** OS 이름, 버전, 하드웨어 정보 확인
+    * 멤버: `sysname`(OS명), `nodename`(호스트명), `release`, `version`, `machine`
+* **`sysinfo()`:** 시스템 설정 정보 확인
+
+---
+
+## 5. 🚦 신호 (Signal)
+
+### (1) 주요 신호 종류 (⭐⭐⭐)
+* **SIGINT:** Ctrl+C (인터럽트)
+* **SIGQUIT:** Ctrl+\ (종료 및 코어덤프)
+* **SIGKILL:** **강제 종료** (무시/블록 불가)
+* **SIGSTOP:** 실행 중단 (무시/블록 불가)
+* **SIGALRM:** `alarm()` 시간 만료 시 발생
+* **SIGCHLD:** 자식 프로세스 상태 변경(종료 등) 시 부모에게 알림
+* **SIGSEGV:** 잘못된 메모리 접근 (Segmentation Fault)
+* **SIGPIPE:** 끊어진 파이프에 쓰기 시도 시
+
+### (2) 신호 처리 함수 (⭐⭐)
+* **보내기:** `kill(pid, sig)`
+* **대기:** `pause()` (신호 올 때까지 멈춤)
+* **핸들러 등록:** `signal(sig, handler)`
+    * `SIG_IGN`: 신호 무시
+    * `SIG_DFL`: 기본 동작 수행
+* **정보 출력:** `psignal(sig, msg)`, `strsignal(sig)` (신호 이름 문자열 출력)
