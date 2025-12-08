@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <unistd.h>  // getuid
 #include <pwd.h>     // getpwuid, struct passwd
+
 int main() {
     // 1. 현재 사용자 ID 획득
     uid_t uid = getuid();
