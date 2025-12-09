@@ -10,6 +10,7 @@
 ```c
 #include <stdio.h>
 #include <unistd.h>      // getuid
+#include <sys/types.h>   // uid_t 같은 타입 정의가 들어있음 (정석)
 #include <pwd.h>         // getpwuid, struct passwd
 
 int main() {
@@ -19,10 +20,12 @@ int main() {
     // 2. 패스워드 파일에서 uid와 일치하는 사용자 정보 획득
     struct passwd *pw = getpwuid(uid);
 
-    // 예외 처리
-    if (pw == NULL) return -1;
+    if (pw == NULL) {
+        perror("getpwuid error"); // 간단한 에러 메시지 출력
+        return -1;
+    }
 
-    // 3. 구조체 정보 출력 (멤버변수명 pw_ 주의)
+    // 3. 구조체 정보 출력
     printf("Login Name: %s\n", pw->pw_name);
     printf("UID: %d\n", pw->pw_uid);
     printf("GID: %d\n", pw->pw_gid);
